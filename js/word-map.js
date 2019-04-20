@@ -24,81 +24,97 @@ function check_country(country_code) {
 
 }
 
-/**
- * Get the translation from API call
- * @param {string} translate_me 
- * @param {string} language 
- * @param {object} overlay 
- */
-function do_translation(translate_me, language, overlay) {
+jQuery(function ($) {
 
-    var language_set = $('#language').val();
+    /**
+     * Get the translation from API call
+     * @param {string} translate_me 
+     * @param {string} language 
+     * @param {object} overlay 
+     */
+    function do_translation(translate_me, language, language_set, overlay) {
 
-    var translate_url = 'https://translation.googleapis.com/language/translate/v2',
-        params = {
-            key: api_key,
-            q: translate_me,
-            target: language,
-            source: language_set != 'detect' ? language_set : '',
-        }
+        var translation_required = language_set.toLowerCase() != language.toLowerCase();
 
-    var translate = $.ajax({
-        data: params,
-        traditional: true,
-        url: translate_url,
-        method: 'POST',
-        success: function (response) {
-
-            //console.log(response.data.translations[0].translatedText);
-
-            if (response.data) {
-
-                var translated_text = response.data.translations[0].translatedText;
-
-                overlay.args.text = translated_text;
-                overlay.remove();
-                overlay.draw();
-
+        var translate_url = 'https://translation.googleapis.com/language/translate/v2',
+            params = {
+                key: api_key,
+                q: translate_me,
+                target: language,
+                source: language_set != 'detect' && translation_required ? language_set : '',
             }
 
-        }
-    });
+        var translate = $.ajax({
+            data: params,
+            traditional: true,
+            url: translate_url,
+            method: 'POST',
+            success: function (response) {
 
-}
+                //console.log(response.data.translations[0].translatedText);
 
-/**
- * Do all the translations
- * @param {*} translate_me
- */
-function do_translations(translate_me) {
+                if (response.data) {
 
-    overlays.forEach(overlay => {
-        do_translation(translate_me, overlay.args.language, overlay);
-    });
+                    var translated_text = response.data.translations[0].translatedText;
 
-}
+                    overlay.args.text = translation_required ? translated_text : translate_me;
+                    overlay.remove();
+                    overlay.draw();
 
+                }
 
-/**
- * Check for url search param
- */
-function check_for_param() {
-
-    var urlParams = new URLSearchParams(window.location.search);
-    var search = urlParams.get('s');
-
-    if (search) {
-
-        do_translations(search);
-
-        $('#search-form input').val(search).focus();
+            }
+        });
 
     }
 
-}
+    /**
+     * Do all the translations
+     * @param {*} translate_me
+     */
+    function do_translations(translate_me, language_set) {
+
+        overlays.forEach(overlay => {
+            do_translation(translate_me, overlay.args.language, language_set, overlay);
+        });
+
+    }
 
 
-$(function () {
+    /**
+     * Check for url search param
+     */
+    function check_for_param() {
+
+        var urlParams = new URLSearchParams(window.location.search);
+        var search = urlParams.get('word');
+        var language_set = urlParams.get('language') ? urlParams.get('language') : 'detect';
+
+        if (search) {
+
+            do_translations(search, language_set);
+
+            $('#search-form input').val(search).focus();
+
+        }
+
+    }
+
+    /**
+     * Put it all together to peform translation, update url and stor data in DB
+     */
+    function perform_translations() {
+
+        var translate_me = $('#search-form input').val();
+        var language_set = $('#language').val();
+
+        do_translations(translate_me, language_set);
+
+        // Update the url param, to enable the sharing likes eh
+        history.pushState('', translate_me, '?word=' + translate_me + '&language=' + language_set);
+
+    }
+
 
     // Get the supported languages
     var supported_languages_ajax = $.ajax({
@@ -119,7 +135,9 @@ $(function () {
             googleMapInitialise();
 
             // Check for url param
-            // check_for_param();
+            setTimeout(function () {
+                check_for_param();
+            });
         }
     });
 
@@ -128,12 +146,14 @@ $(function () {
 
         e.preventDefault();
 
-        var translate_me = $('#search-form input').val();
+        perform_translations();
 
-        do_translations(translate_me);
+    });
 
-        // Update the url param, to enable the sharing likes eh
-        // history.pushState('', translate_me, '?s=' + translate_me);
+    // Do translation if #language <select> changes
+    $('#language').on('change', function () {
+
+        perform_translations();
 
     });
 
