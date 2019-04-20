@@ -24,7 +24,7 @@ function check_country(country_code) {
 
 }
 
-jQuery(function ($) {
+$(function () {
 
     /**
      * Get the translation from API call
