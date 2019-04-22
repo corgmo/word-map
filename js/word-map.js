@@ -137,7 +137,7 @@ $(function () {
             // Check for url param
             setTimeout(function () {
                 check_for_param();
-            }, 500);
+            }, 200);
         }
     });
 
