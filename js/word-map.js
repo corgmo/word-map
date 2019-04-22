@@ -101,7 +101,7 @@ $(function () {
     }
 
     /**
-     * Put it all together to peform translation, update url and stor data in DB
+     * Put it all together to peform translation and update url
      */
     function perform_translations() {
 
@@ -111,7 +111,7 @@ $(function () {
         do_translations(translate_me, language_set);
 
         // Update the url param, to enable the sharing likes eh
-        // history.pushState('', translate_me, '?word=' + translate_me + '&language=' + language_set);
+        history.pushState('', translate_me, '?word=' + translate_me + '&language=' + language_set);
 
     }
 
@@ -135,9 +135,9 @@ $(function () {
             googleMapInitialise();
 
             // Check for url param
-            // setTimeout(function () {
-            //     check_for_param();
-            // });
+            setTimeout(function () {
+                check_for_param();
+            });
         }
     });
 
